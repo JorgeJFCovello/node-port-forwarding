@@ -1,46 +1,61 @@
 
 const { Client } = require('ssh2');
+const logger = require('../log/log.config');
 
 class Connection {
   constructor(){
     this.conn = new Client();
   }
   initialize(){
-    this.conn.on('ready', () => {
-      createConection()
-    }).connect(
-      !process.env.PATH_TO_PRIVATE_KEY ? {
-      host: process.env.SSH_IP,
-      port: process.env.SSH_PORT,
-      username: process.env.USERNAME,
-      password: process.env.USERPASSWORD
-    } : {
-      host: process.env.SSH_IP,
-      port: process.env.SSH_PORT,
-      username: process.env.USERNAME,
-      privateKey: readFileSync(process.env.PATH_TO_PRIVATE_KEY)
+    try {
+      this.conn.on('ready', () => {
+        createConection()
+      }).connect(
+        !process.env.PATH_TO_PRIVATE_KEY ? {
+        host: process.env.SSH_IP,
+        port: process.env.SSH_PORT,
+        username: process.env.USERNAME,
+        password: process.env.USERPASSWORD
+      } : {
+        host: process.env.SSH_IP,
+        port: process.env.SSH_PORT,
+        username: process.env.USERNAME,
+        privateKey: readFileSync(process.env.PATH_TO_PRIVATE_KEY)
+      }
+      );
+    } catch (err) {
+        logger.error(err)
     }
-    );
   }
   createConection(){
-    console.log('Client :: ready');
-      conn.forwardOut(process.env.REMOTE_IP, process.env.REMOTE_PORT, process.env.LOCAL_IP, process.env.LOCAL_PORT, (err, stream) => {
-        if (err) throw err;
-        stream.on('close', () => {
-          console.log('TCP :: CLOSED');
-          conn.end();
-        }).on('data', (data) => {
-          console.log('TCP :: DATA: ' + data);
-        }).end([
-          'HEAD / HTTP/1.1',
-          'User-Agent: curl/7.27.0',
-          'Host: 127.0.0.1',
-          'Accept: */*',
-          'Connection: close',
-          '',
-          ''
-        ].join('\r\n'));
-      });
+    try{
+      this.conn.forwardOut(process.env.REMOTE_IP, process.env.REMOTE_PORT, process.env.LOCAL_IP, process.env.LOCAL_PORT, (err, stream) => {
+          if (err){
+            logger.error(err)
+            throw err;
+          }
+          stream.on('close', () => {
+            try{
+              console.log('TCP :: CLOSED');
+              this.conn.end();
+            } catch (err) {
+             logger.error(err)
+            }
+          }).on('data', (data) => {
+            logger.info(data)
+          }).end([
+            'HEAD / HTTP/1.1',
+            'User-Agent: curl/7.27.0',
+            'Host: 127.0.0.1',
+            'Accept: */*',
+            'Connection: close',
+            '',
+            ''
+          ].join('\r\n'));
+        });
+    } catch (err) {
+      logger.error(err)
+    }
   }
 }
 
