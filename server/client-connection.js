@@ -24,14 +24,20 @@ class Connection {
       }
       );
     } catch (err) {
-        logger.error(err)
+      logger.log({
+        level: 'error',
+        message: err
+      });
     }
   }
   createConection(){
     try{
       this.conn.forwardOut(process.env.REMOTE_IP, process.env.REMOTE_PORT, process.env.LOCAL_IP, process.env.LOCAL_PORT, (err, stream) => {
           if (err){
-            logger.error(err)
+            logger.log({
+              level: 'error',
+              message: err
+            });
             throw err;
           }
           stream.on('close', () => {
@@ -39,10 +45,16 @@ class Connection {
               console.log('TCP :: CLOSED');
               this.conn.end();
             } catch (err) {
-             logger.error(err)
+              logger.log({
+                level: 'error',
+                message: err
+              });
             }
           }).on('data', (data) => {
-            logger.info(data)
+            logger.log({
+              level: 'info',
+              message: data
+            });
           }).end([
             'HEAD / HTTP/1.1',
             'User-Agent: curl/7.27.0',
@@ -54,7 +66,10 @@ class Connection {
           ].join('\r\n'));
         });
     } catch (err) {
-      logger.error(err)
+      logger.log({
+        level: 'error',
+        message: err
+      });
     }
   }
 }
